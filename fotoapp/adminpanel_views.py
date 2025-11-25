@@ -1,4 +1,5 @@
 from django.shortcuts import render, get_object_or_404, redirect
+from django.contrib import messages
 from django.contrib.auth.decorators import login_required
 from django.http import HttpResponseBadRequest
 from .models.session import Session
@@ -18,9 +19,22 @@ def session_list(request):
 def session_add(request):
     if request.method == "POST":
         name = request.POST.get("name")
-        description = request.POST.get("description", "")
-        session = Session.objects.create(name=name, description=description)
-        return redirect("panel_sessions")
+        description = request.POST.get("description")
+        password = request.POST.get("password")
+
+        session = Session.objects.create(
+            name=name,
+            description=description,
+            password=password
+        )
+
+        if request.FILES.getlist("images"):
+            for img in request.FILES.getlist("images"):
+                Photo.objects.create(session=session, image=img)
+
+        messages.success(request, "Nowa sesja została utworzona!")
+        return redirect('panel_session_edit_photos', id=session.id)
+
     return render(request, "adminpanel/session_form.html")
 
 @login_required
@@ -31,6 +45,7 @@ def session_edit_photos(request, id):
     # Zapis danych sesji
     if request.method == "POST" and "save_session" in request.POST:
         session.name = request.POST.get("name")
+        session.password = request.POST.get("password", session.password)
         session.description = request.POST.get("description", "")
         session.save()
         return redirect("panel_session_edit_photos", id=session.id)

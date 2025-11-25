@@ -1,16 +1,53 @@
 {% extends "adminpanel/base_adminpanel.html" %}
 {% block content %}
-<h2>{% if session %}Edytuj{% else %}Dodaj{% endif %} sesję</h2>
-<form method="POST" class="card p-4 shadow-sm">
+<h2>Nowa sesja</h2>
+
+<form method="POST" enctype="multipart/form-data" class="card p-4 mb-4 shadow-sm">
     {% csrf_token %}
+    
     <div class="mb-3">
-        <label class="form-label">Nazwa</label>
+        <label class="form-label">Nazwa sesji</label>
         <input type="text" name="name" class="form-control" value="{{ session.name|default:'' }}" required>
     </div>
+
+    <div class="mb-3">
+        <label class="form-label">Hasło sesji</label>
+        <input type="text" name="password" class="form-control" value="{{ session.password|default:'' }}">
+    </div>
+
     <div class="mb-3">
         <label class="form-label">Opis</label>
         <textarea name="description" class="form-control">{{ session.description|default:'' }}</textarea>
     </div>
-    <button type="submit" class="btn btn-success mt-2">Zapisz</button>
+
+    <!-- Drag & drop zdjęć -->
+    <div class="mb-3">
+        <label class="form-label">Dodaj zdjęcia</label>
+        <input type="file" name="images" id="images" multiple class="form-control">
+        <div id="preview" class="mt-2 d-flex flex-wrap"></div>
+    </div>
+
+    <button type="submit" class="btn btn-success">Utwórz sesję</button>
 </form>
+
+<script>
+const input = document.getElementById('images');
+const preview = document.getElementById('preview');
+
+input.addEventListener('change', () => {
+    preview.innerHTML = '';
+    Array.from(input.files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.height = '100px';
+            img.style.marginRight = '10px';
+            img.style.marginBottom = '10px';
+            preview.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+});
+</script>
 {% endblock %}
