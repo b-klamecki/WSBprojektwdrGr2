@@ -1,0 +1,21 @@
+<div class="row">
+    {% for p in photos %}
+    <div class="col-md-3 mb-4">
+        <div class="card shadow-sm">
+            <img src="{{ p.image.url }}" class="card-img-top" style="height:180px; object-fit:cover;">
+            <div class="card-body">
+                <div class="d-flex justify-content-between align-items-center mb-2">
+                    <span>Cena: {{ p.price }} PLN</span>
+                    {% if p.session.cover_photo_id == p.id %}
+                    <span class="badge bg-success">Okładka</span>
+                    {% endif %}
+                </div>
+                <div class="d-flex justify-content-between">
+                    <a href="{% url 'panel_set_cover_photo' p.id %}" class="btn btn-sm btn-primary">Ustaw okładkę</a>
+                    <a href="{% url 'panel_photo_delete' p.id %}" class="btn btn-sm btn-danger">Usuń</a>
+                </div>
+            </div>
+        </div>
+    </div>
+    {% endfor %}
+</div>

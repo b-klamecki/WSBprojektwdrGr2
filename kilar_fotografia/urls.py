@@ -1,11 +1,12 @@
 from django.contrib import admin
-from django.urls import path
+from django.urls import path, include
 from fotoapp import views
 from django.conf import settings
 from django.conf.urls.static import static
 
 urlpatterns = [
-    path('admin/', admin.site.urls),
+    path('djangoadmin/', admin.site.urls),
+    path("admin/", include("fotoapp.adminpanel_urls")),
     path('', views.homepage, name='home'),
     path('oferta/', views.oferta, name='oferta'),
     path('kontakt/', views.kontakt, name='kontakt'),

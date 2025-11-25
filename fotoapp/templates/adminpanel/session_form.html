@@ -1,0 +1,117 @@
+{% extends "adminpanel/base_adminpanel.html" %}
+{% block content %}
+
+<h2>{% if session %}Edytuj sesję i zarządzaj zdjęciami{% else %}Nowa sesja{% endif %}</h2>
+
+<!-- FORMULARZ SESJI -->
+<form method="POST" class="card p-4 mb-4 shadow-sm">
+    {% csrf_token %}
+
+    <div class="mb-3">
+        <label class="form-label">Nazwa sesji</label>
+        <input type="text" name="name" class="form-control" value="{{ session.name|default:'' }}" required>
+    </div>
+
+    <div class="mb-3">
+        <label for="id_password" class="form-label">Hasło sesji</label>
+        <input type="text" name="password" id="id_password" class="form-control" value="{{ session.password|default:'' }}">
+    </div>
+
+    <div class="mb-3">
+        <label class="form-label">Opis</label>
+        <textarea name="description" class="form-control">{{ session.description|default:'' }}</textarea>
+    </div>
+
+    <button type="submit" class="btn btn-success">{% if session %}Zapisz sesję{% else %}Utwórz sesję{% endif %}</button>
+</form>
+
+{% if session %}
+<!-- PODGLĄD WYBRANYCH ZDJĘĆ PRZED UPLOADEM -->
+<div id="preview-grid" class="d-flex flex-wrap mb-3"></div>
+
+<!-- OBSZAR DRAG & DROP – FORMULARZ UPLOADU -->
+<form id="upload-form" class="card mb-4 shadow-sm text-center"
+      enctype="multipart/form-data"
+      style="min-height:250px; display:flex; align-items:center; justify-content:center; border:2px dashed #bbb; background:#f9f9f9; cursor:pointer; flex-direction:column;">
+    <input type="file" name="images" multiple id="file-input" style="display:none;">
+    <p class="text-muted">Przeciągnij i upuść zdjęcia tutaj lub kliknij, aby wybrać</p>
+    <button type="submit" class="btn btn-primary mt-2">Zapisz zdjęcia</button>
+</form>
+
+<!-- GRID ZDJĘĆ -->
+<div id="photo-grid">
+    {% include "adminpanel/partials/photo_grid.html" %}
+</div>
+
+<script>
+// --- Drag & Drop + podgląd ---
+const dropZone = document.getElementById('upload-form');
+const fileInput = document.getElementById('file-input');
+const previewGrid = document.getElementById('preview-grid');
+
+dropZone.addEventListener('click', e => { if(e.target.tagName !== "BUTTON") fileInput.click(); });
+dropZone.addEventListener('dragover', e => { e.preventDefault(); dropZone.style.borderColor = '#777'; });
+dropZone.addEventListener('dragleave', () => { dropZone.style.borderColor = '#bbb'; });
+dropZone.addEventListener('drop', e => { e.preventDefault(); fileInput.files = e.dataTransfer.files; showPreview(fileInput.files); });
+
+fileInput.addEventListener('change', () => showPreview(fileInput.files));
+
+function showPreview(files) {
+    previewGrid.innerHTML = '';
+    Array.from(files).forEach(file => {
+        const reader = new FileReader();
+        reader.onload = e => {
+            const img = document.createElement('img');
+            img.src = e.target.result;
+            img.style.height = '120px';
+            img.style.margin = '5px';
+            img.style.objectFit = 'cover';
+            img.style.border = '1px solid #ccc';
+            img.style.borderRadius = '4px';
+            previewGrid.appendChild(img);
+        };
+        reader.readAsDataURL(file);
+    });
+}
+
+// --- Upload zdjęć ---
+dropZone.addEventListener('submit', e => {
+    e.preventDefault();
+    const files = fileInput.files;
+    if(!files.length) return;
+
+    const formData = new FormData();
+    Array.from(files).forEach(f => formData.append('images', f));
+
+    fetch("{% url 'panel_session_photos_upload' session.id %}", {
+        method: 'POST',
+        headers: {'X-CSRFToken': '{{ csrf_token }}'},
+        body: formData
+    })
+    .then(resp => resp.text())
+    .then(html => {
+        document.getElementById('photo-grid').innerHTML = html;
+        previewGrid.innerHTML = '';
+        fileInput.value = '';
+    });
+});
+
+// --- AJAX dla Ustaw okładkę i Usuń ---
+document.getElementById('photo-grid').addEventListener('click', function(e) {
+    if(e.target.tagName === 'A') {
+        e.preventDefault();
+        const url = e.target.href;
+        fetch(url, {
+            method: 'POST',
+            headers: {'X-CSRFToken': '{{ csrf_token }}'}
+        })
+        .then(resp => resp.json())
+        .then(data => {
+            document.getElementById('photo-grid').innerHTML = data.html;
+        });
+    }
+});
+</script>
+{% endif %}
+
+{% endblock %}

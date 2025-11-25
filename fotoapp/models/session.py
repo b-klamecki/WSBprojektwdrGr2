@@ -13,6 +13,15 @@ class Session(models.Model):
     password = models.CharField(max_length=100, blank=True)
     created_at = models.DateTimeField(auto_now_add=True)
     access_token = models.CharField(max_length=36, unique=True, blank=True)
+    cover_photo = models.ForeignKey(
+        "Photo",
+        null=True,
+        blank=True,
+        on_delete=models.SET_NULL,
+        related_name='cover_for_session'
+    )
+
+
 
     # Nadpisanie metody save() do automatycznego generowania tokenu i hasła przed zapisem.
     def save(self, *args, **kwargs):
