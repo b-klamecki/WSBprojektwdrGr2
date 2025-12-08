@@ -1,4 +1,5 @@
 {% load static %}
+{% load watermark %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
@@ -31,9 +32,11 @@
               <span class="text">Wybierz</span>
             </button>
           </div>
-          <a href="{% url 'serve_encrypted_image' photo.token %}" data-lightbox="session-gallery" class="no-middle-click">
-            <img src="{% url 'serve_encrypted_image' photo.token %}" alt="Zdjęcie {{ photo.id }}" draggable="false" />
+          
+          <a href="{{ photo.image|add_watermark }}" data-lightbox="session-gallery" class="no-middle-click">
+            <img src="{{ photo.image|add_watermark }}" alt="Zdjęcie {{ photo.id }}" draggable="false" />
           </a>
+
           <div class="status-chip">Wybrano</div>
         </div>
       {% empty %}
@@ -42,7 +45,6 @@
     </section>
   </main>
 
-  <!-- MINI-KOSZYK -->
   <div id="miniCartBackdrop" class="mc-backdrop"></div>
   <div id="miniCart" class="mc-panel">
     <div class="mc-header">
@@ -62,7 +64,6 @@
     <p>&copy; 2025 Kilar Fotografia. Wszelkie prawa zastrzeżone.</p>
   </footer>
 
-  <!-- wymuś ustawienie ciasteczka CSRF -->
   <form style="display:none">{% csrf_token %}</form>
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>

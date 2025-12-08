@@ -143,3 +143,20 @@ FERNET = Fernet(ENCRYPTION_KEY)
 TEMPLATES[0]["OPTIONS"]["context_processors"] += [
     "fotoapp.context_processors.cart_count",
 ]
+
+
+
+
+# Płatności
+STRIPE_PUBLIC_KEY = 'pk_test_...' # Twój klucz publiczny ze Stripe Dashboard
+STRIPE_SECRET_KEY = 'sk_test_...' # Twój klucz prywatny ze Stripe Dashboard
+PRICE_PER_PHOTO = 25.00  # Cena za jedno zdjęcie (PLN)
+
+# Email (przykładowa konfiguracja dla Gmail, dostosuj do swojego hostingu)
+EMAIL_BACKEND = 'django.core.mail.backends.smtp.EmailBackend'
+EMAIL_HOST = 'smtp.gmail.com'
+EMAIL_PORT = 587
+EMAIL_USE_TLS = True
+EMAIL_HOST_USER = 'kilarprojekt@gmail.com'
+EMAIL_HOST_PASSWORD = 'Kilarprojekt1!' # Nie zwykłe hasło, tylko "App Password"
+DEFAULT_FROM_EMAIL = 'Kilar Fotografia <kilarprojekt@gmail.com>'
