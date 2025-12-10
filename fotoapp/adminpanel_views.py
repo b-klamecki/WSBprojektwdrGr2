@@ -1,9 +1,34 @@
 from django.shortcuts import render, get_object_or_404, redirect
 from django.contrib import messages
 from django.contrib.auth.decorators import login_required
+from django.contrib.auth import authenticate, login, logout
 from django.http import HttpResponseBadRequest, JsonResponse
 from .models.session import Session
 from .models.photo import Photo
+
+def panel_login(request):
+    if request.user.is_authenticated:
+        return redirect("panel_dashboard")
+
+    if request.method == "POST":
+        username = request.POST.get("username")
+        password = request.POST.get("password")
+
+        user = authenticate(request, username=username, password=password)
+
+        if user is not None:
+            login(request, user)
+            next_url = request.GET.get("next") or "/admin/"
+            return redirect(next_url)
+
+        messages.error(request, "Nieprawidłowy login lub hasło")
+
+    return render(request, "adminpanel/login.html")
+
+
+def panel_logout(request):
+    logout(request)
+    return redirect("panel_login")
 
 @login_required
 def dashboard(request):

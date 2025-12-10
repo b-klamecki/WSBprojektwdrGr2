@@ -10,4 +10,6 @@ urlpatterns = [
     path("sessions/<int:id>/photos/upload/", adminpanel_views.session_photos_upload, name="panel_session_photos_upload"),
     path("photos/<int:photo_id>/set-cover/", adminpanel_views.set_cover_photo, name="panel_set_cover_photo"),
     path("photos/<int:photo_id>/delete/", adminpanel_views.photo_delete, name="panel_photo_delete"),
+    path("login/", adminpanel_views.panel_login, name="panel_login"),
+    path("logout/", adminpanel_views.panel_logout, name="panel_logout"),
 ]

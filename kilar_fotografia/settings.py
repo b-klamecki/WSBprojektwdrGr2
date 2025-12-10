@@ -160,3 +160,6 @@ EMAIL_USE_TLS = True
 EMAIL_HOST_USER = 'kilarprojekt@gmail.com'
 EMAIL_HOST_PASSWORD = 'Kilarprojekt1!' 
 DEFAULT_FROM_EMAIL = 'Kilar Fotografia <kilarprojekt@gmail.com>'
+
+LOGIN_URL = 'login/'
+LOGOUT_REDIRECT_URL = 'login/'
