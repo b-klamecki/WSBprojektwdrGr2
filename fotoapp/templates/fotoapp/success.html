@@ -3,61 +3,90 @@
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Dziękujemy za zamówienie | Kilar Fotografia</title>
-    <link rel="stylesheet" href="{% static 'css/gallery.css' %}">
+    
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+    <link rel="stylesheet" href="{% static 'css/main-style.css' %}">
+
     <style>
+        /* Style specyficzne tylko dla tej strony, używające zmiennych z main-style.css */
         body {
-            font-family: 'Helvetica Neue', sans-serif;
-            background-color: #f4f4f4;
+            /* Używamy głównego ciemnego tła */
+            background-color: var(--bg-dark);
+            /* Centrowanie na środku ekranu */
             display: flex;
             align-items: center;
             justify-content: center;
             min-height: 100vh;
             margin: 0;
+            padding: 20px; /* Odstęp na małych ekranach */
         }
-        .success-container {
-            background: white;
-            padding: 50px;
-            border-radius: 12px;
-            box-shadow: 0 15px 35px rgba(0,0,0,0.1);
+
+        /* Wygląd "szklanej" karty, spójny z resztą strony */
+        .success-card {
+            background-color: var(--glass-bg); /* Półprzezroczyste tło */
+            backdrop-filter: blur(10px); /* Rozmycie tła pod spodem */
+            border: 1px solid var(--glass-border); /* Delikatna ramka */
+            padding: 50px 40px;
+            border-radius: 24px; /* Zaokrąglone rogi jak w navbarze */
+            box-shadow: 0 15px 35px rgba(0,0,0,0.3); /* Głęboki cień */
             text-align: center;
             max-width: 500px;
-            width: 90%;
+            width: 100%;
         }
-        .icon-check {
+
+        /* Duża zielona ikona sukcesu */
+        .success-icon i {
             font-size: 80px;
-            color: #27ae60;
-            margin-bottom: 20px;
-        }
-        h1 { margin: 0 0 15px; color: #333; }
-        p { color: #666; line-height: 1.6; margin-bottom: 30px; }
-        
-        .btn-download {
-            display: inline-block;
-            background-color: #3498db;
-            color: white;
-            padding: 15px 30px;
-            text-decoration: none;
-            border-radius: 6px;
-            font-weight: bold;
-            transition: background 0.3s;
-            margin-bottom: 15px;
-        }
-        .btn-download:hover { background-color: #2980b9; }
-        
-        .btn-home {
+            color: var(--accent-green);
             display: block;
-            color: #888;
-            text-decoration: none;
-            font-size: 0.9rem;
+            margin-bottom: 20px;
+            /* Delikatna animacja pulsowania */
+            animation: pulse 2s infinite;
         }
-        .btn-home:hover { color: #555; text-decoration: underline; }
+
+        h1 {
+            margin: 0 0 15px;
+            color: white;
+            font-weight: 300;
+            font-size: 2rem;
+        }
+
+        p {
+            color: var(--text-muted);
+            line-height: 1.6;
+            margin-bottom: 40px;
+            font-size: 1.1rem;
+        }
+
+        /* Link powrotu na dół */
+        .btn-home-link {
+            display: inline-flex;
+            align-items: center;
+            gap: 8px;
+            color: var(--text-muted);
+            margin-top: 20px;
+            font-size: 0.9rem;
+            transition: color 0.3s;
+        }
+        .btn-home-link:hover {
+            color: var(--accent-blue);
+        }
+
+        @keyframes pulse {
+            0% { transform: scale(1); opacity: 1; }
+            50% { transform: scale(1.05); opacity: 0.8; }
+            100% { transform: scale(1); opacity: 1; }
+        }
     </style>
 </head>
 <body>
 
-    <div class="success-container">
-        <div class="icon-check">✓</div>
+    <div class="success-card">
+        <div class="success-icon">
+            <i class="bi bi-check-circle-fill"></i>
+        </div>
         <h1>Płatność przyjęta!</h1>
         <p>
             Dziękujemy za zakup zdjęć. Twoje zamówienie zostało przetworzone pomyślnie.
@@ -65,12 +94,19 @@
         </p>
 
         {% if zip_url %}
-            <a href="{{ zip_url }}" class="btn-download">POBIERZ ZDJĘCIA (.ZIP)</a>
+            <a href="{{ zip_url }}" class="btn-primary" style="display: inline-flex; align-items: center; justify-content: center; gap: 10px; text-decoration: none; padding: 15px 30px;">
+                <i class="bi bi-download"></i> POBIERZ ZDJĘCIA (.ZIP)
+            </a>
         {% else %}
-            <p style="color:red">Wystąpił problem z wygenerowaniem pliku. Skontaktuj się z administratorem.</p>
+            <p style="color: var(--accent-red); background: rgba(220, 53, 69, 0.1); padding: 15px; border-radius: 8px;">
+                <i class="bi bi-exclamation-triangle-fill"></i> Wystąpił problem z wygenerowaniem pliku. Skontaktuj się z administratorem.
+            </p>
         {% endif %}
 
-        <a href="{% url 'home' %}" class="btn-home">Wróć na stronę główną</a>
+        <br>
+        <a href="{% url 'home' %}" class="btn-home-link">
+            <i class="bi bi-arrow-left"></i> Wróć na stronę główną
+        </a>
     </div>
 
 </body>

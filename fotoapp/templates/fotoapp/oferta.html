@@ -3,156 +3,166 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Oferta – Kilar Fotografia</title>
+  <title>Oferta - Kilar Fotografia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{% static 'css/homepage.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/oferta.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/hero-slider.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/double-panel.css' %}" />
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/main-style.css' %}" />
+
+  <style>
+    .hero-section {
+        background-image: url("{% static 'images/wedding4.png' %}");
+        height: 50vh;
+    }
+
+    .faq-btn {
+        width: 100%; text-align: left; padding: 20px;
+        background: rgba(255, 255, 255, 0.03);
+        border: none; border-bottom: 1px solid var(--border-color);
+        color: var(--text-main); font-size: 1.1rem;
+        cursor: pointer; display: flex; justify-content: space-between; align-items: center;
+        transition: background 0.3s;
+    }
+    .faq-btn:hover { background: rgba(255, 255, 255, 0.08); }
+    .faq-btn.active { background: rgba(255, 255, 255, 0.1); color: var(--accent-blue); }
+    
+    .faq-icon { transition: transform 0.3s ease; }
+    .faq-btn.active .faq-icon { transform: rotate(180deg); }
+
+    .faq-content {
+        max-height: 0; overflow: hidden;
+        transition: max-height 0.3s ease-out, opacity 0.3s ease-out;
+        background-color: rgba(0, 0, 0, 0.2); opacity: 0;
+    }
+    .faq-text-inner { padding: 20px; color: var(--text-muted); line-height: 1.6; }
+    .faq-content.open { opacity: 1; }
+  </style>
 </head>
 <body>
 
-<header id="mainHeader">
-  <div class="logo-left">
-    <img
-      id="logoImg"
-      src="{% static 'images/logo.png' %}"
-      alt="Logo"
-      data-logo="{% static 'images/logo.png' %}"
-      data-logo-inverted="{% static 'images/logo-inverted.png' %}"
-    />
-  </div>
-
-  <div class="nav-links">
-    <a href="/">Strona główna</a>
-    <a href="{% url 'oferta' %}">Oferta</a>
-    <a href="{% url 'kontakt' %}">Kontakt</a>
-  </div>
-
-  <div class="hamburger" id="hamburgerBtn">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-</header>
-
-<section class="oferta-hero" id="heroSection"
-  data-images='[
-    "{% static "images/wedding.png" %}",
-    "{% static "images/wedding4.png" %}",
-    "{% static "images/wedding6.png" %}",
-    "{% static "images/wedding5.png" %}",
-    "{% static "images/tre.jpg" %}"
-  ]'>
-  <div class="bg-layer" id="bgLayer1"></div>
-  <div class="bg-layer" id="bgLayer2"></div>
-  <div class="hero-text">
-    <h1>Nasza oferta</h1>
-    <p>Profesjonalna fotografia ślubna, rodzinna i okolicznościowa – z pasją i sercem.</p>
-  </div>
-</section>
-
-<!-- Sekcja kafelków oferty -->
-<section class="oferta-list">
-  <div class="oferta-card">
-    <h2>Fotografia ślubna</h2>
-    <p>Reportaż od przygotowań do oczepin, sesja plenerowa i album w prezencie. Uchwyćcie ten wyjątkowy dzień na zawsze.</p>
-    <p class="cena">Cena od: 3500 zł</p>
-  </div>
-
-  <div class="oferta-card">
-    <h2>Sesje rodzinne</h2>
-    <p>Naturalne zdjęcia w plenerze lub w domu. Chwile bliskości, które zostaną z Wami na pokolenia.</p>
-    <p class="cena">Cena od: 600 zł</p>
-  </div>
-
-  <div class="oferta-card">
-    <h2>Chrzty, komunie, roczki</h2>
-    <p>Pełna relacja z uroczystości oraz indywidualna sesja dziecka. Zdjęcia, do których będziecie wracać.</p>
-    <p class="cena">Cena od: 800 zł</p>
-  </div>
-
-  <div class="oferta-card">
-    <h2>Plenery artystyczne</h2>
-    <p>Kreatywne sesje stylizowane, kobiece, narzeczeńskie – stworzone wspólnie z Wami, według Waszego pomysłu.</p>
-    <p class="cena">Cena od: 700 zł</p>
-  </div>
-</section>
-
-
-<!-- Sekcja z dwoma panelami -->
-<section class="double-panel">
-  <div class="panel-left">
-    <div class="slider">
-      <button class="slider-btn prev" aria-label="Poprzednie zdjęcie">&#10094;</button>
-      <button class="slider-btn next" aria-label="Następne zdjęcie">&#10095;</button>
-      <div class="slides-container">
-        <img src="{% static 'images/wedding.png' %}" alt="Zdjęcie 1" class="slide active" />
-        <img src="{% static 'images/wedding4.png' %}" alt="Zdjęcie 2" class="slide" />
-        <img src="{% static 'images/wedding6.png' %}" alt="Zdjęcie 3" class="slide" />
-        <img src="{% static 'images/wedding5.png' %}" alt="Zdjęcie 4" class="slide" />
-        <img src="{% static 'images/tre.jpg' %}" alt="Zdjęcie 5" class="slide" />
-      </div>
+  <nav class="island-navbar">
+    
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
     </div>
-  </div>
-  <div class="panel-right">
-    <h2>Najczęstsze pytania</h2>
-    <div class="faq-list">
-      <div class="faq-item">
-        <button class="faq-question">Czy podpisujemy umowę i jak wygląda rozliczenie?</button>
-        <div class="faq-answer">Tak, podpisujemy umowę. Rozliczenie następuje w dwóch ratach...</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Czy płacimy za dojazd?</button>
-        <div class="faq-answer">Dojazd na terenie miasta X jest bezpłatny, poza miastem ustalamy indywidualnie.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Czy zdjęcia będą poddane obróbce?</button>
-        <div class="faq-answer">Tak, każde zdjęcie poddajemy autorskiej obróbce.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Kto dokonuje ostatecznej selekcji zdjęć?</button>
-        <div class="faq-answer">Selekcji dokonujemy wspólnie z Wami lub samodzielnie, według ustaleń.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Czy otrzymamy "surowe" zdjęcia?</button>
-        <div class="faq-answer">Nie przekazujemy zdjęć prosto z aparatu – tylko dopracowane fotografie.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Jak długo z nami będziecie?</button>
-        <div class="faq-answer">Jesteśmy z Wami od przygotowań do oczepin lub według indywidualnych ustaleń.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Czy możemy decydować o wyrażeniu zgody na publikację fotografii?</button>
-        <div class="faq-answer">Oczywiście, publikujemy zdjęcia tylko za Waszą zgodą.</div>
-      </div>
-      <div class="faq-item">
-        <button class="faq-question">Jaki jest czas na realizację pleneru ślubnego?</button>
-        <div class="faq-answer">Plener realizujemy w dogodnym dla Was terminie, najczęściej do 3 miesięcy po ślubie.</div>
-      </div>
+
+    <div class="nav-links">
+        <a href="/">Strona Główna</a>
+        <a href="{% url 'kontakt' %}">Kontakt</a>
+        <div class="nav-socials-mobile">
+            <a href="https://facebook.com" target="_blank"><i class="bi bi-facebook"></i></a>
+            <a href="https://instagram.com" target="_blank"><i class="bi bi-instagram"></i></a>
+        </div>
     </div>
-  </div>
-</section>
+    
+    <img src="{% static 'images/logo-inverted.png' %}" alt="Logo" class="navbar-logo">
+    
+    <div class="nav-socials">
+        <a href="#"><i class="bi bi-facebook"></i></a>
+        <a href="#"><i class="bi bi-instagram"></i></a>
+    </div>
+  </nav>
 
-<footer>
-  &copy; 2025 Kilar Fotografia. Wszelkie prawa zastrzeżone.
-</footer>
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Nasza Oferta</h1>
+        <p>Profesjonalna fotografia z pasją i sercem.</p>
+    </div>
+  </section>
 
-<script src="{% static 'js/hero-slider.js' %}"></script>
-<script src="{% static 'js/double-panel.js' %}"></script>
-<script>
-  // Header scroll effect
-  window.addEventListener('scroll', () => {
-    const header = document.getElementById('mainHeader');
-    const logo = document.getElementById('logoImg');
-    if (window.scrollY > 80) {
-      header.classList.add('scrolled');
-      logo.src = "{% static 'images/logo-inverted.png' %}";
-    } else {
-      header.classList.remove('scrolled');
-      logo.src = "{% static 'images/logo.png' %}";
+  <main class="container">
+    <div class="grid-cards">
+        
+        <div class="dark-card">
+            <div class="card-img-wrap">
+                <img src="{% static 'images/wedding.png' %}" alt="Ślub">
+            </div>
+            <div class="card-body">
+                <h3>Fotografia Ślubna</h3>
+                <p>Pełen reportaż od przygotowań do oczepin.</p>
+                <span class="price-tag">od 3500 zł</span>
+            </div>
+        </div>
+
+        <div class="dark-card">
+            <div class="card-img-wrap">
+                <img src="{% static 'images/wedding5.png' %}" alt="Rodzina">
+            </div>
+            <div class="card-body">
+                <h3>Sesje Rodzinne</h3>
+                <p>Naturalne zdjęcia w plenerze lub w domu.</p>
+                <span class="price-tag">od 600 zł</span>
+            </div>
+        </div>
+
+        <div class="dark-card">
+            <div class="card-img-wrap">
+                <img src="{% static 'images/wedding6.png' %}" alt="Chrzest">
+            </div>
+            <div class="card-body">
+                <h3>Chrzty i Komunie</h3>
+                <p>Pamiątka z najważniejszych uroczystości.</p>
+                <span class="price-tag">od 800 zł</span>
+            </div>
+        </div>
+
+    </div>
+
+    <div class="faq-section" style="margin-top: 80px; max-width: 800px; margin-left: auto; margin-right: auto;">
+        <h2 class="section-title">Najczęstsze pytania</h2>
+        
+        <div class="faq-item">
+            <button class="faq-btn">Czy podpisujemy umowę? <i class="bi bi-chevron-down faq-icon"></i></button>
+            <div class="faq-content">
+                <div class="faq-text-inner">Tak, podpisujemy umowę, co jest gwarancją terminu i jakości dla obu stron.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-btn">Czy zdjęcia są poddane obróbce? <i class="bi bi-chevron-down faq-icon"></i></button>
+            <div class="faq-content">
+                <div class="faq-text-inner">Tak, każde oddane zdjęcie przechodzi autorską obróbkę kolorystyczną i retusz.</div>
+            </div>
+        </div>
+
+        <div class="faq-item">
+            <button class="faq-btn">Jaki jest czas oczekiwania? <i class="bi bi-chevron-down faq-icon"></i></button>
+            <div class="faq-content">
+                <div class="faq-text-inner">Standardowy czas oczekiwania na zdjęcia ślubne to do 90 dni roboczych.</div>
+            </div>
+        </div>
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Kilar Fotografia. Wszelkie prawa zastrzeżone.
+  </footer>
+
+  <script>
+    function toggleMenu() {
+        document.querySelector('.hamburger').classList.toggle('active');
+        document.querySelector('.nav-links').classList.toggle('active');
     }
-  });
-</script>
+
+    document.addEventListener("DOMContentLoaded", function() {
+        const acc = document.getElementsByClassName("faq-btn");
+        for (let i = 0; i < acc.length; i++) {
+            acc[i].addEventListener("click", function() {
+                this.classList.toggle("active");
+                const panel = this.nextElementSibling;
+                if (panel.style.maxHeight) {
+                    panel.style.maxHeight = null;
+                    panel.classList.remove("open");
+                } else {
+                    panel.style.maxHeight = panel.scrollHeight + "px";
+                    panel.classList.add("open");
+                } 
+            });
+        }
+    });
+  </script>
+
 </body>
 </html>

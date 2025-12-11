@@ -1,39 +1,137 @@
+{% load static %}
 <!DOCTYPE html>
 <html lang="pl">
 <head>
     <meta charset="UTF-8">
     <title>Logowanie — Panel</title>
     <link href="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/css/bootstrap.min.css" rel="stylesheet">
-</head>
-<body class="bg-light d-flex align-items-center justify-content-center" style="height:100vh;">
-    <div class="card shadow p-4" style="min-width:350px;">
-        <h4 class="mb-3 text-center">Logowanie do panelu</h4>
+    
+    <link href="{% static 'css/admin_custom.css' %}" rel="stylesheet">
 
+    <style>
+        /* Nadpisujemy style globalne tylko dla strony logowania */
+        body {
+            background-color: #1e1e2f !important; /* Ciemne tło */
+            height: 100vh;
+            display: flex;
+            align-items: center;
+            justify-content: center;
+            padding: 0 !important; /* Resetujemy padding, który dodaliśmy dla panelu */
+            overflow: hidden;
+            position: relative;
+        }
+
+        /* Dekoracyjne koła w tle (dla nowoczesnego efektu) */
+        .bg-circle {
+            position: absolute;
+            border-radius: 50%;
+            filter: blur(90px);
+            z-index: 0;
+            opacity: 0.4;
+        }
+        .circle-1 { width: 300px; height: 300px; background: #007bff; top: -50px; left: -50px; }
+        .circle-2 { width: 400px; height: 400px; background: #dc3545; bottom: -100px; right: -100px; }
+
+        /* Karta logowania */
+        .card {
+            background-color: rgba(39, 41, 61, 0.9); /* Półprzezroczysty granat */
+            backdrop-filter: blur(20px);
+            border: 1px solid rgba(255, 255, 255, 0.1);
+            color: #e1e1e6;
+            min-width: 380px;
+            z-index: 1;
+            border-radius: 16px;
+        }
+
+        /* Inputy */
+        .form-control {
+            background-color: #1e1e2f;
+            border: 1px solid #444;
+            color: #fff;
+        }
+        .form-control:focus {
+            background-color: #1e1e2f;
+            color: #fff;
+            border-color: #007bff;
+            box-shadow: 0 0 0 0.25rem rgba(0, 123, 255, 0.25);
+        }
+        .form-label {
+            color: #a0a0b0;
+        }
+
+        /* Przycisk */
+        .btn-primary {
+            background-color: #007bff;
+            border: none;
+            padding: 10px;
+            font-weight: 600;
+        }
+        .btn-primary:hover {
+            background-color: #0056b3;
+        }
+
+        /* Link powrotu */
+        a.text-decoration-none {
+            color: #a0a0b0;
+            transition: 0.3s;
+        }
+        a.text-decoration-none:hover {
+            color: #fff;
+        }
+
+        /* Kontener na komunikaty (żeby nie rozpychały formularza) */
+        .messages-container {
+            position: absolute;
+            top: 20px;
+            left: 50%;
+            transform: translateX(-50%);
+            width: 100%;
+            max-width: 400px;
+            z-index: 10;
+        }
+    </style>
+</head>
+<body>
+
+    <div class="bg-circle circle-1"></div>
+    <div class="bg-circle circle-2"></div>
+
+    <div class="messages-container">
         {% if messages %}
             {% for m in messages %}
-                <div class="alert alert-danger">{{ m }}</div>
+                <div class="alert {% if m.tags == 'error' %}alert-danger{% else %}alert-success{% endif %} alert-dismissible fade show shadow" role="alert">
+                    {{ m }}
+                    <button type="button" class="btn-close" data-bs-dismiss="alert" aria-label="Close"></button>
+                </div>
             {% endfor %}
         {% endif %}
+    </div>
+
+    <div class="card shadow p-4">
+        <h3 class="mb-4 text-center fw-bold">Panel Fotografa</h3>
 
         <form method="POST">
             {% csrf_token %}
             <div class="mb-3">
                 <label class="form-label">Login</label>
-                <input type="text" class="form-control" name="username" required autofocus>
+                <input type="text" class="form-control" name="username" required autofocus placeholder="Wpisz login">
             </div>
 
-            <div class="mb-3">
+            <div class="mb-4">
                 <label class="form-label">Hasło</label>
-                <input type="password" class="form-control" name="password" required>
+                <input type="password" class="form-control" name="password" required placeholder="Wpisz hasło">
             </div>
 
-            <button class="btn btn-primary w-100" type="submit">Zaloguj</button>
+            <button class="btn btn-primary w-100 mb-3" type="submit">Zaloguj się</button>
         </form>
-        <div class="mt-3 text-center">
-            <a href="{% url 'home' %}" class="text-decoration-none">
-                ← Powrót na stronę główną
+
+        <div class="text-center">
+            <a href="{% url 'home' %}" class="text-decoration-none small">
+                &larr; Powrót na stronę główną
             </a>
         </div>
     </div>
+
+    <script src="https://cdn.jsdelivr.net/npm/bootstrap@5.3.0/dist/js/bootstrap.bundle.min.js"></script>
 </body>
 </html>

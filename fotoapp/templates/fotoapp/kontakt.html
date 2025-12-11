@@ -3,104 +3,103 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
-  <title>Kontakt – Kilar Fotografia</title>
+  <title>Kontakt - Kilar Fotografia</title>
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <link rel="stylesheet" href="{% static 'css/homepage.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/oferta.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/hero-slider.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/double-panel.css' %}" />
-  <link rel="stylesheet" href="{% static 'css/kontakt.css' %}" />
+  
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/main-style.css' %}" />
+
+  <style>
+    .hero-section {
+        background-image: url("{% static 'images/wedding5.png' %}");
+        height: 50vh;
+    }
+  </style>
 </head>
 <body>
 
-<header id="mainHeader">
-  <div class="logo-left">
-    <img
-      id="logoImg"
-      src="{% static 'images/logo.png' %}"
-      alt="Logo"
-      data-logo="{% static 'images/logo.png' %}"
-      data-logo-inverted="{% static 'images/logo-inverted.png' %}"
-    />
-  </div>
-
-  <div class="nav-links">
-    <a href="/">Strona główna</a>
-    <a href="{% url 'oferta' %}">Oferta</a>
-    <a href="{% url 'kontakt' %}">Kontakt</a>
-  </div>
-
-  <div class="hamburger" id="hamburgerBtn">
-    <span></span>
-    <span></span>
-    <span></span>
-  </div>
-</header>
-
-<!-- Hero z prostym tłem i tekstem -->
-<section class="oferta-hero kontakt-hero">
-  <div class="hero-text">
-    <h1>Kontakt</h1>
-    <p>Skontaktuj się z nami, aby omówić szczegóły sesji fotograficznej lub zadać pytania.</p>
-  </div>
-</section>
-
-<!-- Sekcja kontaktowa z formularzem i danymi -->
-<section class="kontakt-section">
-  <div class="kontakt-container">
-    <div class="kontakt-form">
-      <h2>Formularz kontaktowy</h2>
-      <form method="post" action="{% url 'kontakt' %}">
-        {% csrf_token %}
-        <label for="name">Imię i nazwisko</label>
-        <input type="text" id="name" name="name" required placeholder="Twoje imię i nazwisko" />
-
-        <label for="email">Adres e-mail</label>
-        <input type="email" id="email" name="email" required placeholder="Twój e-mail" />
-
-        <label for="message">Wiadomość</label>
-        <textarea id="message" name="message" rows="6" required placeholder="Napisz wiadomość"></textarea>
-
-        <button type="submit" class="btn-submit">Wyślij</button>
-      </form>
+  <nav class="island-navbar">
+    
+    <div class="hamburger" onclick="toggleMenu()">
+        <span></span><span></span><span></span>
     </div>
 
-    <div class="kontakt-info">
-      <h2>Dane kontaktowe</h2>
-      <p><strong>Telefon:</strong> +48 123 456 789</p>
-      <p><strong>Email:</strong> kontakt@kilarfotografia.pl</p>
-      <p><strong>Adres:</strong> ul. Przykładowa 12, 00-000 Warszawa</p>
-      <p><strong>Facebook:</strong> 
-        <a href="https://facebook.com/kilarfotografia" target="_blank" rel="noopener" style="color: #55b9b3; text-decoration: none;">
-          facebook.com/kilarfotografia
-        </a>
-      </p>
-      <h3>Godziny pracy</h3>
-      <p>Poniedziałek – Piątek: 9:00 – 18:00</p>
-      <p>Sobota: 10:00 – 14:00</p>
-      <p>Niedziela: nieczynne</p>
+    <div class="nav-links">
+        <a href="/">Strona Główna</a>
+        <a href="{% url 'oferta' %}">Oferta</a>
+        <div class="nav-socials-mobile">
+            <a href="https://facebook.com" target="_blank"><i class="bi bi-facebook"></i></a>
+            <a href="https://instagram.com" target="_blank"><i class="bi bi-instagram"></i></a>
+        </div>
     </div>
-  </div>
-</section>
+    
+    <img src="{% static 'images/logo-inverted.png' %}" alt="Logo" class="navbar-logo">
+    
+    <div class="nav-socials">
+        <a href="#"><i class="bi bi-facebook"></i></a>
+        <a href="#"><i class="bi bi-instagram"></i></a>
+    </div>
+  </nav>
 
-<footer>
-  &copy; 2025 Kilar Fotografia. Wszelkie prawa zastrzeżone.
-</footer>
+  <section class="hero-section">
+    <div class="hero-overlay"></div>
+    <div class="hero-content">
+        <h1>Skontaktuj się z nami</h1>
+        <p>Masz pytania? Chcesz zarezerwować termin? Pisz śmiało!</p>
+    </div>
+  </section>
 
-<script src="{% static 'js/hero-slider.js' %}"></script>
-<script>
-  // efekt przy scrollu
-  window.addEventListener('scroll', () => {
-    const header = document.getElementById('mainHeader');
-    const logo = document.getElementById('logoImg');
-    if (window.scrollY > 80) {
-      header.classList.add('scrolled');
-      logo.src = "{% static 'images/logo-inverted.png' %}";
-    } else {
-      header.classList.remove('scrolled');
-      logo.src = "{% static 'images/logo.png' %}";
+  <main class="container">
+    <div class="contact-layout">
+        
+        <div class="contact-form">
+            <h2 style="margin-bottom: 20px;">Wyślij wiadomość</h2>
+            <form method="post" action="{% url 'kontakt' %}">
+                {% csrf_token %}
+                
+                <label style="color: var(--text-muted); display:block; margin-bottom:5px;">Imię i nazwisko</label>
+                <input type="text" name="name" class="styled-input" required>
+
+                <label style="color: var(--text-muted); display:block; margin-bottom:5px;">Adres e-mail</label>
+                <input type="email" name="email" class="styled-input" required>
+
+                <label style="color: var(--text-muted); display:block; margin-bottom:5px;">Wiadomość</label>
+                <textarea name="message" class="styled-input" rows="6" required></textarea>
+
+                <button type="submit" class="btn-primary">Wyślij wiadomość</button>
+            </form>
+        </div>
+
+        <div class="contact-info">
+            <h2 style="margin-bottom: 20px;">Dane kontaktowe</h2>
+            <div class="dark-card" style="padding: 30px; cursor: default;">
+                <p><i class="bi bi-telephone-fill"></i> +48 123 456 789</p>
+                <p><i class="bi bi-envelope-fill"></i> kontakt@kilarfotografia.pl</p>
+                <p><i class="bi bi-geo-alt-fill"></i> ul. Przykładowa 12, Warszawa</p>
+                <p><i class="bi bi-facebook"></i> facebook.com/kilarfotografia</p>
+                
+                <hr style="border-color: var(--border-color); margin: 20px 0;">
+                
+                <h3 style="font-size: 1.1rem; margin-bottom: 15px;">Godziny pracy</h3>
+                <p>Pn - Pt: 9:00 - 18:00</p>
+                <p>Sobota: 10:00 - 14:00</p>
+                <p>Niedziela: Odpoczywamy</p>
+            </div>
+        </div>
+
+    </div>
+  </main>
+
+  <footer>
+    &copy; 2025 Kilar Fotografia. Wszelkie prawa zastrzeżone.
+  </footer>
+
+  <script>
+    function toggleMenu() {
+        document.querySelector('.hamburger').classList.toggle('active');
+        document.querySelector('.nav-links').classList.toggle('active');
     }
-  });
-</script>
+  </script>
+
 </body>
 </html>
