@@ -1,27 +1,53 @@
 {% extends "adminpanel/base_adminpanel.html" %}
-{% block content %}
-<div class="d-flex justify-content-between align-items-center mb-4">
-    <h2>Sesje</h2>
-    <a href="{% url 'panel_session_add' %}" class="btn btn-primary">Dodaj sesję</a>
-</div>
 
-<div class="row">
-    {% for s in sessions %}
-    <div class="col-md-4 mb-4 d-flex">
-        <div class="card shadow-sm w-100 h-100 d-flex flex-column">
-            {% if s.cover_photo %}
-            <img src="{{ s.cover_photo.image.url }}" class="card-img-top" style="height:200px; object-fit:cover;">
-            {% else %}
-            <div style="height:200px; background:#ddd; display:flex; align-items:center; justify-content:center;">
-                Brak miniatury
-            </div>
-            {% endif %}
-            <div class="card-body d-flex flex-column">
-                <h5 class="card-title">{{ s.name }}</h5>
-                <p class="card-text flex-grow-1">{{ s.description }}</p>
-                <div class="mt-auto d-flex gap-2">
-                    <a href="{% url 'panel_session_edit' s.id %}" class="btn btn-sm btn-secondary">Edytuj</a>
-                    <button type="button" class="btn btn-sm btn-danger" 
+{% block content %}
+
+<div class="container-fluid p-0">
+
+    <div class="toolbar-container">
+        <h2 class="toolbar-title">Twoje Sesje</h2>
+        
+        <input type="text" id="searchInput" class="search-input" placeholder="Szukaj sesji...">
+        
+        <a href="{% url 'panel_session_add' %}" class="btn btn-success px-4" style="font-weight: 600;">
+            + Dodaj sesję
+        </a>
+    </div>
+
+    <div class="sessions-grid" id="sessionsContainer">
+        {% for s in sessions %}
+        <div class="custom-card-wrapper" data-name="{{ s.name|lower }}">
+            
+            <div class="custom-card">
+                
+                <div class="card-img-wrapper">
+                    {% if s.cover_photo %}
+                        {% if s.cover_photo.watermarked_image %}
+                             <img src="{{ s.cover_photo.watermarked_image.url }}" alt="{{ s.name }}">
+                        {% else %}
+                             <img src="{{ s.cover_photo.image.url }}" alt="{{ s.name }}">
+                        {% endif %}
+                    {% else %}
+                        <div style="width:100%; height:100%; display:flex; align-items:center; justify-content:center; background:#333; color:#777; flex-direction:column;">
+                            <span style="font-size:30px;">📷</span>
+                            <small>Brak okładki</small>
+                        </div>
+                    {% endif %}
+                </div>
+
+                <div class="card-content">
+                    <div class="card-title">{{ s.name }}</div>
+                    <div class="card-desc">
+                        {% if s.description %}{{ s.description }}{% else %}Brak opisu{% endif %}
+                    </div>
+                </div>
+
+                <div class="card-actions">
+                    <a href="{% url 'panel_session_edit' s.id %}" class="btn btn-primary btn-sm">
+                        Edytuj
+                    </a>
+                    
+                    <button type="button" class="btn btn-danger btn-sm" 
                             data-bs-toggle="modal" 
                             data-bs-target="#deleteModal" 
                             data-session-id="{{ s.id }}" 
@@ -29,18 +55,22 @@
                         Usuń
                     </button>
                 </div>
+
+            </div> </div>
+        {% empty %}
+            <div style="grid-column: 1/-1; text-align: center; padding: 50px; color: #888;">
+                <h3>Brak sesji</h3>
+                <p>Kliknij "Dodaj sesję", aby zacząć.</p>
             </div>
-        </div>
+        {% endfor %}
     </div>
-    {% endfor %}
 </div>
 
-<!-- MODAL USUWANIA -->
-<div class="modal fade" id="deleteModal" tabindex="-1" aria-labelledby="deleteModalLabel" aria-hidden="true">
+<div class="modal fade" id="deleteModal" tabindex="-1" aria-hidden="true">
   <div class="modal-dialog">
     <div class="modal-content">
       <div class="modal-header">
-        <h5 class="modal-title" id="deleteModalLabel">Potwierdzenie usunięcia</h5>
+        <h5 class="modal-title">Potwierdzenie usunięcia</h5>
         <button type="button" class="btn-close" data-bs-dismiss="modal" aria-label="Zamknij"></button>
       </div>
       <div class="modal-body">
@@ -56,15 +86,35 @@
 
 <script>
     var deleteModal = document.getElementById('deleteModal')
+
+    document.body.appendChild(deleteModal);
+
     deleteModal.addEventListener('show.bs.modal', function (event) {
         var button = event.relatedTarget
         var sessionId = button.getAttribute('data-session-id')
         var sessionName = button.getAttribute('data-session-name')
         var modalTitle = deleteModal.querySelector('#modal-session-name')
         var confirmBtn = deleteModal.querySelector('#confirm-delete-btn')
-
+        
         modalTitle.textContent = sessionName
-        confirmBtn.href = "{% url 'panel_session_delete' 0 %}".replace('/0/', '/' + sessionId + '/')
+        
+        var urlTemplate = "{% url 'panel_session_delete' 0 %}";
+        confirmBtn.href = urlTemplate.replace('/0/', '/' + sessionId + '/');
     })
+
+    document.getElementById('searchInput').addEventListener('keyup', function() {
+        let filter = this.value.toLowerCase();
+        let wrappers = document.querySelectorAll('.custom-card-wrapper');
+
+        wrappers.forEach(function(wrapper) {
+            let name = wrapper.getAttribute('data-name');
+            if (name.includes(filter)) {
+                wrapper.style.display = "block";
+            } else {
+                wrapper.style.display = "none";
+            }
+        });
+    });
 </script>
+
 {% endblock %}

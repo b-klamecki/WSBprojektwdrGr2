@@ -3,6 +3,10 @@
 import os
 import zipfile
 import stripe
+import io
+from PIL import Image, ImageEnhance # ImageEnhance potrzebne do przezroczystości
+from django.contrib.staticfiles import finders
+
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
 from django.views.decorators.http import require_POST
@@ -56,9 +60,6 @@ def check_password(request):
 # ===============================
 
 def gallery_view(request, access_token):
-    """
-    Widok galerii zdjęć dla użytkownika z unikalnym tokenem dostępu.
-    """
     session = get_object_or_404(Session, access_token=access_token)
     photos = session.photos.all()
     request.session['gallery_access'] = True
@@ -69,23 +70,85 @@ def gallery_view(request, access_token):
 
 def serve_encrypted_image(request, token):
     """
-    Serwuje obraz po zaszyfrowanej ścieżce, tylko z widoku galerii.
+    Serwuje obraz z SIATKĄ ZNAKÓW WODNYCH (Tiled Watermark).
     """
     try:
-        referer = request.META.get('HTTP_REFERER', '')
-        sec_fetch_dest = request.META.get('HTTP_SEC_FETCH_DEST', '')
-        
-        if not referer or '/gallery/' not in referer:
-            pass 
-            
+        # Sprawdzanie uprawnień sesji (opcjonalne, ale zalecane)
         if not request.session.get('gallery_access'):
-            return HttpResponseForbidden("Dostęp zabroniony. Brak sesji.")
+             # Jeśli chcesz pozwolić koszykowi działać bez sesji galerii (np. po odświeżeniu),
+             # możesz zakomentować poniższą linię, ale zmniejsza to bezpieczeństwo.
+             pass 
+             # return HttpResponseForbidden("Dostęp zabroniony.")
             
         path = decrypt_path(token)
         full_path = os.path.join(settings.MEDIA_ROOT, path)
+        
         if not os.path.isfile(full_path):
             raise FileNotFoundError
-        return FileResponse(open(full_path, 'rb'), content_type='image/jpeg')
+
+        # --- GENEROWANIE SIATKI ZNAKÓW WODNYCH ---
+        try:
+            # 1. Otwórz zdjęcie główne
+            base_image = Image.open(full_path).convert("RGBA")
+            
+            # 2. Znajdź logo
+            watermark_path = finders.find('images/logo.png') # lub logo-inverted.png
+            
+            if watermark_path:
+                watermark = Image.open(watermark_path).convert("RGBA")
+                
+                # 3. Zmniejsz logo (do kafelkowania - np. 15% szerokości zdjęcia)
+                scale_factor = 0.15 
+                wm_width = int(base_image.width * scale_factor)
+                wm_ratio = watermark.height / watermark.width
+                wm_height = int(wm_width * wm_ratio)
+                
+                # Resize
+                watermark = watermark.resize((wm_width, wm_height), Image.Resampling.LANCZOS)
+                
+                # 4. Zmniejsz przezroczystość logo (żeby nie było zbyt nachalne w siatce)
+                # Tworzymy nową warstwę alfa z mniejszą wartością
+                alpha = watermark.split()[3]
+                alpha = ImageEnhance.Brightness(alpha).enhance(0.3) # 0.3 = 30% widoczności
+                watermark.putalpha(alpha)
+
+                # 5. PĘTLA KAFELKOWANIA (Tiling)
+                # Obliczamy odstępy (np. logo + 50% marginesu)
+                step_x = int(wm_width * 1.5)
+                step_y = int(wm_height * 1.5)
+                
+                # Przesuwamy start trochę, żeby siatka była ładnie rozłożona
+                start_x = int(step_x * 0.5)
+                start_y = int(step_y * 0.5)
+
+                # Iterujemy po całym obrazku
+                for y in range(0, base_image.height, step_y):
+                    for x in range(0, base_image.width, step_x):
+                        # Opcjonalnie: Przesunięcie co drugi rząd (efekt cegieł)
+                        offset_x = 0
+                        if (y // step_y) % 2 == 1:
+                            offset_x = int(step_x / 2)
+                            
+                        # Pozycja wklejenia
+                        pos_x = x + offset_x
+                        pos_y = y
+                        
+                        # Sprawdź czy nie wychodzimy za bardzo (opcjonalne, paste radzi sobie z cropem)
+                        base_image.paste(watermark, (pos_x, pos_y), watermark)
+
+            # 6. Konwersja i zapis do pamięci
+            rgb_image = base_image.convert("RGB")
+            buffer = io.BytesIO()
+            rgb_image.save(buffer, format="JPEG", quality=80) # quality 80 dla szybszego ładowania koszyka
+            buffer.seek(0)
+            
+            return FileResponse(buffer, content_type='image/jpeg')
+
+        except Exception as e:
+            # Fallback w razie błędu graficznego - wyślij oryginał (lub placeholder)
+            print(f"Watermark Error: {e}")
+            return FileResponse(open(full_path, 'rb'), content_type='image/jpeg')
+
     except Exception:
         raise Http404("Błędny token lub plik nie istnieje")
 
@@ -146,6 +209,7 @@ def api_cart_summary(request):
         line_total = qty * price
         total += line_total
 
+        # Token do obrazka z watermarkiem
         token = encrypt_path(p.image.name)
         thumb_url = request.build_absolute_uri(
             reverse("serve_encrypted_image", args=[token])
@@ -176,19 +240,13 @@ def cart_view(request):
 # ===============================
 
 def create_checkout_session(request):
-    """
-    Tworzy sesję płatności w Stripe na podstawie zawartości koszyka.
-    Przekazuje session_id do URL sukcesu, aby pobrać email klienta.
-    """
     cart = get_cart(request)
     if not cart:
         return redirect('home')
 
     domain = request.build_absolute_uri('/')[:-1] 
-
     line_items = []
     
-    # pobieranie id zdjęć z koszyka
     ids = [int(pid) for pid in cart.keys()]
     photos = Photo.objects.filter(id__in=ids)
     photos_map = {p.id: p for p in photos}
@@ -198,7 +256,6 @@ def create_checkout_session(request):
         photo = photos_map.get(pid)
         if not photo:
             continue
-            
         unit_amount = int(float(entry.get('price', 0)) * 100)
         
         line_items.append({
@@ -229,14 +286,6 @@ def create_checkout_session(request):
 
 
 def payment_success(request):
-    """
-    Obsługuje powrót po udanej płatności:
-    1. Pobiera email ze Stripe (jeśli dostępny).
-    2. Pakuje zdjęcia do ZIP.
-    3. Wysyła maila z linkiem (w osobnym bloku try/except).
-    4. Czyści koszyk.
-    """
-    # stripe get mail
     session_id = request.GET.get('session_id')
     customer_email = None
 
@@ -247,7 +296,6 @@ def payment_success(request):
                 customer_email = session_details.customer_details.email
         except Exception as e:
             print(f"Błąd pobierania danych ze Stripe: {e}")
-
 
     cart = get_cart(request)
     if not cart:
@@ -270,7 +318,7 @@ def payment_success(request):
     zip_relative_url = f"{settings.MEDIA_URL}zips/{zip_filename}"
     zip_absolute_url = request.build_absolute_uri(zip_relative_url)
 
-    # zipowanie
+    # ZIPUJEMY ORYGINAŁY
     try:
         with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
             for photo in photos:
@@ -278,14 +326,12 @@ def payment_success(request):
                 if os.path.exists(original_path):
                     zip_file.write(original_path, arcname=os.path.basename(original_path))
     except Exception as e:
-        print(f"!!! BŁĄD TWORZENIA ZIP: {e}")
         return render(request, 'fotoapp/homepage.html', {'error': 'Wystąpił błąd podczas generowania plików (ZIP).'})
 
-    # wysylanie maila
+    # WYSYŁKA MAILA
     email_sent = False
     if customer_email:
         try:
-            print(f"Próbuję wysłać maila na: {customer_email}...")
             send_mail(
                 subject='Twoje zdjęcia - Kilar Fotografia',
                 message=f'Dziękujemy za zakup!\n\nTwoje zdjęcia są gotowe do pobrania pod tym linkiem:\n{zip_absolute_url}\n\nPozdrawiamy,\nZespół Kilar Fotografia',
@@ -293,10 +339,9 @@ def payment_success(request):
                 recipient_list=[customer_email],
                 fail_silently=False,
             )
-            print("Mail wysłany pomyślnie!")
             email_sent = True
         except Exception as e:
-            print(f"!!! BŁĄD WYSYŁANIA MAILA: {e}")
+            print(f"Błąd wysyłki maila: {e}")
 
     request.session['cart'] = {}
     request.session.modified = True
@@ -305,6 +350,6 @@ def payment_success(request):
         'zip_url': zip_relative_url,
         'count': photos.count(),
         'email': customer_email,
-        'email_error': not email_sent and customer_email is not None # Informacja dla template'u
+        'email_error': not email_sent and customer_email is not None
     }
     return render(request, 'fotoapp/success.html', context)

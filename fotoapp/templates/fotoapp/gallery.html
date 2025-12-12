@@ -4,61 +4,88 @@
 <html lang="pl">
 <head>
   <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
   <title>Galeria</title>
-  <link rel="stylesheet" href="{% static 'css/gallery.css' %}" />
+  
   <link href="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/css/lightbox.min.css" rel="stylesheet" />
+  <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/bootstrap-icons@1.11.1/font/bootstrap-icons.css">
+  <link rel="stylesheet" href="{% static 'css/gallery.css' %}" />
 </head>
 <body>
 
-  <header id="mainHeader">
-    <div class="logo-left">
-      <a href="{% url 'home' %}" title="Wróć na stronę główną">
-        <img src="{% static 'images/logo.png' %}" alt="Logo Kilar Fotografia" />
-      </a>
+  <nav class="client-navbar">
+    <a href="/" class="btn-home">
+        <i class="bi bi-house-door-fill"></i> Strona główna
+    </a>
+
+    <img src="{% static 'images/logo-inverted.png' %}" alt="Logo" class="navbar-center-logo">
+
+    <button class="btn-cart-floating" id="open-mini-cart" type="button">
+        <i class="bi bi-cart-fill"></i>
+        <span class="cart-text">Koszyk</span>
+        <span class="cart-badge" id="cart-count">0</span>
+    </button>
+  </nav>
+
+  <main class="gallery-container">
+    
+    <div class="gallery-header">
+       <h1>Wybierz swoje zdjęcia</h1>
+       <p>Kliknij "+" aby dodać zdjęcie do koszyka. Kliknij na zdjęcie, aby powiększyć.</p>
     </div>
 
-    <div class="cart-header">
-      <button type="button" id="open-mini-cart" class="cart-icon">
-        🛒 Koszyk (<span id="cart-count">{{ cart_count }}</span>)
-      </button>
-    </div>
-  </header>
-
-  <main>
     <section class="gallery-grid">
       {% for photo in photos %}
-        <div class="photo-item" data-photo-id="{{ photo.id }}">
-          <div class="photo-select-bar">
-            <button class="select-btn action-chip" type="button">
-              <span class="icon">+</span>
-              <span class="text">Wybierz</span>
-            </button>
-          </div>
+        <div class="photo-card" data-photo-id="{{ photo.id }}">
           
-          <a href="{{ photo.image|add_watermark }}" data-lightbox="session-gallery" class="no-middle-click">
-            <img src="{{ photo.image|add_watermark }}" alt="Zdjęcie {{ photo.id }}" draggable="false" />
+          <a href="{{ photo.image|add_watermark }}" data-lightbox="session-gallery" class="photo-link">
+            <div class="img-wrapper">
+                <img src="{{ photo.image|add_watermark }}" alt="Zdjęcie {{ photo.id }}" loading="lazy" />
+            </div>
           </a>
 
-          <div class="status-chip">Wybrano</div>
+          <button class="select-btn" type="button" title="Dodaj do koszyka">
+            <i class="bi bi-plus-lg icon-plus"></i>
+            <i class="bi bi-check-lg icon-check"></i>
+          </button>
+
+          <div class="selected-badge">
+            <i class="bi bi-check-circle-fill"></i> Wybrano
+          </div>
+
         </div>
       {% empty %}
-        <p class="empty-gallery-message">Brak zdjęć w tej sesji.</p>
+        <div class="empty-state">
+           <i class="bi bi-images"></i>
+           <p>Brak zdjęć w tej galerii.</p>
+        </div>
       {% endfor %}
     </section>
   </main>
 
   <div id="miniCartBackdrop" class="mc-backdrop"></div>
+  
   <div id="miniCart" class="mc-panel">
     <div class="mc-header">
-      Twój koszyk
-      <button id="miniCartClose" class="mc-close" type="button">×</button>
+      <span>Twój koszyk</span>
+      <button id="miniCartClose" class="mc-close" type="button"><i class="bi bi-x-lg"></i></button>
     </div>
+    
     <div class="mc-body" id="miniCartBody">
-      <p style="text-align:center;color:#555">Ładowanie…</p>
+      <div class="mc-loading">
+        <div class="spinner"></div>
+        <p>Ładowanie koszyka...</p>
+      </div>
     </div>
+    
     <div class="mc-footer">
-      <div>Suma: <strong><span id="miniCartTotal">0.00</span> zł</strong></div>
-      <button id="checkoutBtn" class="mc-checkout" type="button">Przejdź do płatności</button>
+      <div class="mc-total-row">
+        <span>Suma:</span>
+        <span class="mc-total-amount"><span id="miniCartTotal">0.00</span> zł</span>
+      </div>
+      <button id="checkoutBtn" class="btn-checkout" type="button">
+        Przejdź do płatności <i class="bi bi-arrow-right"></i>
+      </button>
     </div>
   </div>
 
@@ -70,17 +97,29 @@
 
   <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
   <script src="https://cdnjs.cloudflare.com/ajax/libs/lightbox2/2.11.3/js/lightbox.min.js"></script>
+  
   <script>
     (function(){
       try {
-        // --- CSRF cookie ---
+        // --- CSRF cookie helper ---
         function getCookie(name){
-          const value=("; "+document.cookie).split("; "+name+"=");
-          if(value.length===2) return value.pop().split(";").shift();
+          let cookieValue = null;
+          if (document.cookie && document.cookie !== '') {
+            const cookies = document.cookie.split(';');
+            for (let i = 0; i < cookies.length; i++) {
+              const cookie = cookies[i].trim();
+              if (cookie.substring(0, name.length + 1) === (name + '=')) {
+                cookieValue = decodeURIComponent(cookie.substring(name.length + 1));
+                break;
+              }
+            }
+          }
+          return cookieValue;
         }
         const csrftoken = getCookie('csrftoken');
 
-        // --- Referencje DOM ---
+        // --- Elementy DOM ---
+        // Teraz te ID pasują do nowego HTML navbara
         const btnOpen = document.getElementById('open-mini-cart');
         const backdrop = document.getElementById('miniCartBackdrop');
         const panel = document.getElementById('miniCart');
@@ -92,144 +131,193 @@
 
         function on(el, ev, fn){ if(el && el.addEventListener){ el.addEventListener(ev, fn); } }
 
-        // Synchronizacja UI galerii z koszykiem
+        // --- Synchronizacja Galerii z Koszykiem ---
         function syncGalleryWithCart(idsSet){
-          document.querySelectorAll('.photo-item').forEach(item=>{
-            const id = item.dataset.photoId;
+          document.querySelectorAll('.photo-card').forEach(card => {
+            const id = card.dataset.photoId;
             const inCart = idsSet.has(String(id));
-            const btn = item.querySelector('.select-btn');
-            const icon = btn ? btn.querySelector('.icon') : null;
-            const text = btn ? btn.querySelector('.text') : null;
-            const chip = item.querySelector('.status-chip');
-
-            item.classList.toggle('selected', inCart);
-            if(icon) icon.textContent = inCart ? '-' : '+';
-            if(text) text.textContent = inCart ? 'Usuń' : 'Wybierz';
-            if(chip) chip.classList.toggle('visible', inCart);
+            card.classList.toggle('selected', inCart);
           });
         }
 
-        // zamykanie/otwieranie koszyka
-        function openMiniCart(){ backdrop.style.display='block'; panel.style.display='flex'; loadMiniCart(); }
-        function closeMiniCart(){ backdrop.style.display='none'; panel.style.display='none'; }
+        // --- Obsługa Mini-Koszyka ---
+        function openMiniCart(){ 
+            if(backdrop) backdrop.classList.add('active'); 
+            if(panel) panel.classList.add('active'); 
+            loadMiniCart(); 
+        }
+        function closeMiniCart(){ 
+            if(backdrop) backdrop.classList.remove('active'); 
+            if(panel) panel.classList.remove('active'); 
+        }
+        
+        // Podpięcie zdarzeń
         on(btnOpen, 'click', openMiniCart);
         on(backdrop, 'click', closeMiniCart);
         on(btnClose, 'click', closeMiniCart);
 
-        // usuwanie pozycji z koszyka 
+        // --- Usuwanie z poziomu koszyka ---
         on(bodyEl, 'click', async (e)=>{
-          const btn = e.target.closest('.mc-remove');
+          const btn = e.target.closest('.mc-remove-btn');
           if(!btn) return;
           const id = btn.dataset.id;
+          
+          const row = btn.closest('.mc-item');
+          if(row) row.style.opacity = '0.5';
+
           try{
-            const res = await fetch(`/api/cart/delete/${id}/`, { method:'POST', headers:{'X-CSRFToken': csrftoken} });
+            const res = await fetch(`/api/cart/delete/${id}/`, { 
+                method:'POST', 
+                headers:{'X-CSRFToken': csrftoken} 
+            });
             if(!res.ok) throw new Error('HTTP '+res.status);
-            const data = await res.json();
-            await loadMiniCart();
-            if(headerCountEl && typeof data.count!=='undefined'){ headerCountEl.textContent = data.count; }
-          }catch(err){ console.error(err); alert('Nie udało się usunąć pozycji z koszyka.'); }
+            // Przeładuj koszyk po usunięciu
+            await loadMiniCart(); 
+          } catch(err){ 
+            console.error(err); 
+            alert('Błąd podczas usuwania.'); 
+            if(row) row.style.opacity = '1';
+          }
         });
 
-        // Wczytaj mini-koszyk
+        // --- Pobieranie danych koszyka ---
         async function loadMiniCart(){
           try{
             const res = await fetch('/api/cart/summary/');
             if(!res.ok) throw new Error('HTTP '+res.status);
             const data = await res.json();
 
-            bodyEl.innerHTML='';
-
+            // Renderowanie HTML koszyka
             if(!data.items || !data.items.length){
-              bodyEl.innerHTML = '<p style="text-align:center;color:#777">Koszyk jest pusty.</p>';
-              totalEl.textContent = '0.00';
-              if(headerCountEl && typeof data.count!=='undefined'){ headerCountEl.textContent = data.count; }
+              bodyEl.innerHTML = `
+                <div class="empty-cart-msg">
+                    <i class="bi bi-cart-x"></i>
+                    <p>Twój koszyk jest pusty</p>
+                    <button onclick="document.getElementById('miniCartClose').click()" class="btn-continue">Wróć do zdjęć</button>
+                </div>`;
+              if(totalEl) totalEl.textContent = '0.00';
+              if(headerCountEl) headerCountEl.textContent = 0;
               syncGalleryWithCart(new Set());
               return;
             }
 
+            // Mamy elementy
             const idsInCart = new Set(data.items.map(i=>String(i.id)));
+            let html = '';
             for(const it of data.items){
-              const row = document.createElement('div');
-              row.className = 'mc-item';
-              row.innerHTML = `
-                <img src="${it.thumb}" alt="Zdjęcie ${it.id}" />
-                <div class="mc-meta">
-                  <div><strong>Zdjęcie #${it.id}</strong></div>
-                  <div>Ilość: ${it.qty} × ${it.price} zł</div>
-                </div>
-                <div class="mc-right">
-                  <div>${it.line_total} zł</div>
-                  <button class="mc-remove" data-id="${it.id}" type="button">Usuń</button>
+              html += `
+                <div class="mc-item">
+                  <div class="mc-img">
+                    <img src="${it.thumb}" alt="Foto" />
+                  </div>
+                  <div class="mc-info">
+                    <div class="mc-title">Zdjęcie #${it.id}</div>
+                    <div class="mc-price">${it.price} zł</div>
+                  </div>
+                  <button class="mc-remove-btn" data-id="${it.id}" title="Usuń">
+                    <i class="bi bi-trash3"></i>
+                  </button>
                 </div>
               `;
-              bodyEl.appendChild(row);
             }
-            totalEl.textContent = data.total || '0.00';
-            if(headerCountEl && typeof data.count!=='undefined'){ headerCountEl.textContent = data.count; }
+            bodyEl.innerHTML = html;
+            if(totalEl) totalEl.textContent = data.total || '0.00';
+            
+            if(headerCountEl && typeof data.count !== 'undefined'){ 
+                headerCountEl.textContent = data.count; 
+            }
 
+            // Synchronizacja siatki
             syncGalleryWithCart(idsInCart);
 
-          }catch(err){
+          } catch(err){
             console.error(err);
-            bodyEl.innerHTML = '<p style="text-align:center;color:#777">Nie udało się pobrać koszyka.</p>';
-            totalEl.textContent = '0.00';
+            bodyEl.innerHTML = '<p class="error-msg">Nie udało się załadować koszyka.</p>';
           }
         }
-
         
-        on(document.getElementById('checkoutBtn'), 'click', ()=>{
-        window.location.href = "/checkout/";  // checkout stripe
-      });
+        // Inicjalne ładowanie
+        loadMiniCart();
 
-        // Zaznaczanie zdjęć (dodawanie/usuwanie)
-        on(galleryGrid, 'click', async (e)=>{
-          const btn = e.target.closest('.select-btn');
-          if(!btn) return;
-          const item = btn.closest('.photo-item');
-          if(!item) return;
-          const id = item.dataset.photoId;
-          const icon = btn.querySelector('.icon');
-          const text = btn.querySelector('.text');
-          const chip = item.querySelector('.status-chip');
-
-          const willSelect = !item.classList.contains('selected');
-          // optymistycznie UI
-          item.classList.toggle('selected', willSelect);
-          if(icon) icon.textContent = willSelect ? '-' : '+';
-          if(text) text.textContent = willSelect ? 'Usuń' : 'Wybierz';
-          if(chip) chip.classList.toggle('visible', willSelect);
-
-          try{
-            const url = willSelect ? `/api/cart/add/${id}/` : `/api/cart/delete/${id}/`;
-            const res = await fetch(url, { method:'POST', headers:{'X-CSRFToken': csrftoken} });
-            if(!res.ok) throw new Error('HTTP '+res.status);
-            await loadMiniCart();
-          }catch(err){
-            console.error(err);
-            // cofka UI
-            const nowSel = item.classList.contains('selected');
-            item.classList.toggle('selected', !nowSel);
-            if(icon) icon.textContent = !nowSel ? '-' : '+';
-            if(text) text.textContent = !nowSel ? 'Usuń' : 'Wybierz';
-            if(chip) chip.classList.toggle('visible', !nowSel);
-            alert('Nie udało się zaktualizować koszyka.');
-          }
-        });
-
-        // Lightbox + zabezpieczenia
-        if (window.lightbox && lightbox.option) {
-          lightbox.option({ resizeDuration: 100, wrapAround: true });
+        // --- Przycisk Checkout ---
+        const btnCheckout = document.getElementById('checkoutBtn');
+        if(btnCheckout) {
+            on(btnCheckout, 'click', ()=>{
+                window.location.href = "/checkout/";
+            });
         }
+
+        // --- Klikanie w "Wybierz" na zdjęciach ---
+        if(galleryGrid) {
+            on(galleryGrid, 'click', async (e)=>{
+              const btn = e.target.closest('.select-btn');
+              if(!btn) return;
+              
+              e.preventDefault(); 
+              
+              const card = btn.closest('.photo-card');
+              if(!card) return;
+              
+              const id = card.dataset.photoId;
+              const isSelected = card.classList.contains('selected');
+              
+              // Optymistyczna zmiana UI
+              card.classList.toggle('selected', !isSelected);
+              
+              // Aktualizacja licznika "na oko"
+              let currentCount = parseInt(headerCountEl ? headerCountEl.textContent : '0') || 0;
+              if(!isSelected) currentCount++; else currentCount--;
+              if(currentCount < 0) currentCount = 0;
+              if(headerCountEl) headerCountEl.textContent = currentCount;
+
+              try{
+                const url = !isSelected ? `/api/cart/add/${id}/` : `/api/cart/delete/${id}/`;
+                const res = await fetch(url, { 
+                    method:'POST', 
+                    headers:{'X-CSRFToken': csrftoken} 
+                });
+                
+                if(!res.ok) throw new Error('HTTP '+res.status);
+                
+                // Odświeżenie ciche (bez otwierania)
+                const summaryRes = await fetch('/api/cart/summary/');
+                const summaryData = await summaryRes.json();
+                
+                if(headerCountEl && typeof summaryData.count !== 'undefined'){
+                    headerCountEl.textContent = summaryData.count;
+                }
+                
+                const idsInCart = new Set(summaryData.items.map(i=>String(i.id)));
+                syncGalleryWithCart(idsInCart);
+
+              } catch(err){
+                console.error(err);
+                card.classList.toggle('selected', isSelected); // Cofnij zmianę
+                alert('Wystąpił błąd komunikacji z serwerem.');
+              }
+            });
+        }
+
+        // Lightbox Config
+        if (window.lightbox) {
+          lightbox.option({
+            'resizeDuration': 200,
+            'wrapAround': true,
+            'albumLabel': "Zdjęcie %1 z %2",
+            'disableScrolling': true
+          });
+        }
+        
+        // Blokada prawego przycisku
         document.querySelectorAll('img').forEach(img=>{
           img.addEventListener('contextmenu', e=>e.preventDefault());
           img.setAttribute('draggable', 'false');
         });
 
       } catch (err) {
-        console.error('Błąd inicjalizacji skryptu galerii:', err);
+        console.error('Init error:', err);
       }
     })();
   </script>
-
 </body>
 </html>
