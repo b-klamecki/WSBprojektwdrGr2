@@ -26,9 +26,9 @@ SECRET_KEY = 'django-insecure-gu54%j%ciiamhm^*l(qn$a2@w20jaedo*x**@^w726^=awso82
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = ['projektkilar.onrender.com', 'localhost', '127.0.0.1']
+ALLOWED_HOSTS = ['projektkilar.onrender.com', 'localhost', '127.0.0.1', 'wsbprojektwdrgr2.onrender.com']
 
-CSRF_TRUSTED_ORIGINS = ['https://projektkilar.onrender.com']
+CSRF_TRUSTED_ORIGINS = ['https://wsbprojektwdrgr2.onrender.com']
 
 
 
@@ -163,3 +163,4 @@ DEFAULT_FROM_EMAIL = 'Kilar Fotografia <kilarprojekt@gmail.com>'
 
 LOGIN_URL = 'login/'
 LOGOUT_REDIRECT_URL = 'login/'
+
