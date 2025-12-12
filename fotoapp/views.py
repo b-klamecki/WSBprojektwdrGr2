@@ -4,8 +4,8 @@ import os
 import zipfile
 import stripe
 import io
-from PIL import Image, ImageEnhance # ImageEnhance potrzebne do przezroczystości
-from django.contrib.staticfiles import finders
+from PIL import Image, ImageEnhance # Do obróbki zdjęć
+from django.contrib.staticfiles import finders # Do szukania logo
 
 from django.shortcuts import render, redirect, get_object_or_404
 from django.http import FileResponse, Http404, HttpResponseForbidden, JsonResponse
@@ -71,14 +71,13 @@ def gallery_view(request, access_token):
 def serve_encrypted_image(request, token):
     """
     Serwuje obraz z SIATKĄ ZNAKÓW WODNYCH (Tiled Watermark).
+    Używane w koszyku, aby zabezpieczyć miniatury.
     """
     try:
-        # Sprawdzanie uprawnień sesji (opcjonalne, ale zalecane)
+        # Sprawdzanie uprawnień sesji (zalecane)
         if not request.session.get('gallery_access'):
-             # Jeśli chcesz pozwolić koszykowi działać bez sesji galerii (np. po odświeżeniu),
-             # możesz zakomentować poniższą linię, ale zmniejsza to bezpieczeństwo.
+             # Jeśli koszyk ma działać po wygaśnięciu sesji galerii, można to zakomentować
              pass 
-             # return HttpResponseForbidden("Dostęp zabroniony.")
             
         path = decrypt_path(token)
         full_path = os.path.join(settings.MEDIA_ROOT, path)
@@ -91,8 +90,8 @@ def serve_encrypted_image(request, token):
             # 1. Otwórz zdjęcie główne
             base_image = Image.open(full_path).convert("RGBA")
             
-            # 2. Znajdź logo
-            watermark_path = finders.find('images/logo.png') # lub logo-inverted.png
+            # 2. Znajdź logo (używamy tego samego co na stronie)
+            watermark_path = finders.find('images/logo.png') 
             
             if watermark_path:
                 watermark = Image.open(watermark_path).convert("RGBA")
@@ -106,25 +105,24 @@ def serve_encrypted_image(request, token):
                 # Resize
                 watermark = watermark.resize((wm_width, wm_height), Image.Resampling.LANCZOS)
                 
-                # 4. Zmniejsz przezroczystość logo (żeby nie było zbyt nachalne w siatce)
-                # Tworzymy nową warstwę alfa z mniejszą wartością
+                # 4. Zmniejsz przezroczystość logo (żeby nie było zbyt nachalne)
                 alpha = watermark.split()[3]
                 alpha = ImageEnhance.Brightness(alpha).enhance(0.3) # 0.3 = 30% widoczności
                 watermark.putalpha(alpha)
 
                 # 5. PĘTLA KAFELKOWANIA (Tiling)
-                # Obliczamy odstępy (np. logo + 50% marginesu)
+                # Obliczamy odstępy (logo + odstęp)
                 step_x = int(wm_width * 1.5)
                 step_y = int(wm_height * 1.5)
                 
-                # Przesuwamy start trochę, żeby siatka była ładnie rozłożona
+                # Przesunięcie startowe
                 start_x = int(step_x * 0.5)
                 start_y = int(step_y * 0.5)
 
                 # Iterujemy po całym obrazku
                 for y in range(0, base_image.height, step_y):
                     for x in range(0, base_image.width, step_x):
-                        # Opcjonalnie: Przesunięcie co drugi rząd (efekt cegieł)
+                        # Przesunięcie co drugi rząd (efekt cegieł)
                         offset_x = 0
                         if (y // step_y) % 2 == 1:
                             offset_x = int(step_x / 2)
@@ -133,19 +131,20 @@ def serve_encrypted_image(request, token):
                         pos_x = x + offset_x
                         pos_y = y
                         
-                        # Sprawdź czy nie wychodzimy za bardzo (opcjonalne, paste radzi sobie z cropem)
+                        # Wklejamy logo
                         base_image.paste(watermark, (pos_x, pos_y), watermark)
 
             # 6. Konwersja i zapis do pamięci
             rgb_image = base_image.convert("RGB")
             buffer = io.BytesIO()
-            rgb_image.save(buffer, format="JPEG", quality=80) # quality 80 dla szybszego ładowania koszyka
+            # Quality 80 jest wystarczające dla miniatur w koszyku
+            rgb_image.save(buffer, format="JPEG", quality=80) 
             buffer.seek(0)
             
             return FileResponse(buffer, content_type='image/jpeg')
 
         except Exception as e:
-            # Fallback w razie błędu graficznego - wyślij oryginał (lub placeholder)
+            # Fallback w razie błędu graficznego - wyślij oryginał
             print(f"Watermark Error: {e}")
             return FileResponse(open(full_path, 'rb'), content_type='image/jpeg')
 
@@ -244,7 +243,10 @@ def create_checkout_session(request):
     if not cart:
         return redirect('home')
 
-    domain = request.build_absolute_uri('/')[:-1] 
+    # WAŻNE: Używamy sztywnej domeny z settings.py dla HTTPS
+    # Upewnij się, że w settings.py masz: MY_DOMAIN = 'https://twoja-strona.onrender.com'
+    domain = getattr(settings, 'MY_DOMAIN', request.build_absolute_uri('/')[:-1])
+
     line_items = []
     
     ids = [int(pid) for pid in cart.keys()]
@@ -277,12 +279,12 @@ def create_checkout_session(request):
             payment_method_types=['card', 'blik'],
             line_items=line_items,
             mode='payment',
-            success_url=domain + reverse('payment_success') + '?session_id={CHECKOUT_SESSION_ID}',
-            cancel_url=domain + reverse('home'),
+            success_url=f"{domain}{reverse('payment_success')}?session_id={{CHECKOUT_SESSION_ID}}",
+            cancel_url=f"{domain}{reverse('home')}",
         )
         return redirect(checkout_session.url, code=303)
     except Exception as e:
-        return JsonResponse({'error': str(e)})
+        return JsonResponse({'error': f"Stripe Error: {str(e)}"})
 
 
 def payment_success(request):
@@ -320,7 +322,7 @@ def payment_success(request):
 
     # ZIPUJEMY ORYGINAŁY
     try:
-        with zipfile.ZipFile(zip_filepath, 'w') as zip_file:
+        with zipfile.ZipFile(zip_filepath, 'w', compression=zipfile.ZIP_STORED) as zip_file:
             for photo in photos:
                 original_path = photo.image.path 
                 if os.path.exists(original_path):
